@@ -1,0 +1,457 @@
+/* Purple & white checkerboard */
+LDI R0,0;
+LDI R1,0;
+LDI R2,8;
+LDI R14, 12; /* number of checkers left for P1 */
+LDI R15, 12; /* number of checkers left for P2 */
+
+loop:
+	oddrow:
+	STF R0R1, 01, 05;
+	INC R0;
+	INC R0;
+	JCD R0,<,R2,oddrow;
+	INC R1;
+	LDI R0,1;
+
+	evenrow:
+	STF R0R1, 01, 05;
+	INC R0;
+	INC R0;
+	JCD R0,<,R2,evenrow;
+	INC R1;
+	LDI R0,0;
+	JCD R1,<,R2,loop;
+
+placechekcerP1:
+	LDI R0,0;
+	LDI R1,0;
+	LDI R2,8;
+	LDI R3,0;
+	LDI R4,1;
+	Row1:
+		STF R0R1, 01, 02; /*Red for P1*/
+		STG R4,R3;
+		INC R3;
+		INC R3;
+		INC R0;
+		INC R0;
+		JCD R0,<,R2,Row1;
+		LDI R0,1;
+		INC R1;
+		INC R3;
+
+	Row2:
+		STF R0R1, 01, 02;
+		STG R4,R3;
+		INC R3;
+		INC R3;
+		INC R0;
+		INC R0;
+		JCD R0,<,R2, Row2;
+		INC R1;
+		DEC R3;
+		LDI R0,0;
+
+	Row3:
+		STF R0R1, 01, 02;
+		STG R4,R3;
+		INC R3;
+		INC R3;
+		INC R0;
+		INC R0;
+		JCD R0,<,R2,Row3;
+
+placechekcerP2:
+	LDI R0,1;
+	LDI R1,5;
+	LDI R2,8;
+	LDI R3,41;
+	LDI R4,2;
+
+	Row1P2:
+	STF R0R1, 01, 06; /*Blue for P2*/
+	STG R4,R3;
+	INC R3;
+	INC R3;
+	INC R0;
+	INC R0;
+	JCD R0,<,R2,Row1P2;
+	LDI R0,0;
+	INC R1; DEC R3;
+
+	Row2P2:
+	STF R0R1, 01, 06;
+	STG R4,R3;
+	INC R3;
+	INC R3;
+	INC R0;
+	INC R0;
+	JCD R0,<,R2, Row2P2;
+	INC R3;
+	INC R1;
+	LDI R0,1;
+
+	Row3P2:
+	STF R0R1, 01, 06;
+	STG R4,R3;
+	INC R3;
+	INC R3;
+	INC R0;
+	INC R0;
+	JCD R0,<,R2,Row3P2;
+
+
+makeMovePlayer1:
+	CLF 0009,16;
+	CLF 0909,16;
+
+	JCD R15,=,0,P1Wins;
+	JCD R14,=,0,P2Wins;
+
+	readFromRowP1:
+	RCV R0,0;
+
+	JCD R0,<,48,readFromRowP1;
+	JCD R0,>,55,readFromRowP1;
+	CHF 0009,R0,02;
+	CHF 0309,2C,02;
+
+	readFromColP1:
+	RCV R1,0;
+	JCD R1,<,48,readFromColP1;
+	JCD R1,>,55,readFromColP1;
+	CHF 0809,R1,02;
+	CHF 0D09,3E,02;
+
+	checkFrom:
+	LDI R5, 8;
+	LDI R6, 48;
+	SUB R0,R6;
+	SUB R1, R6;
+	MPY R5, R0;
+	ADD R5,R1;
+	LDG R6,R5;
+	JCD R6,<>,1,makeMovePlayer1;  /* If selected box isn't occupied by P1 take input again */
+	MOV R11,R5;
+
+	readToRowP1:
+	RCV R2,0;
+	JCD R2,<,48,readToRowP1;
+	JCD R2,>,55,readToRowP1;
+	CHF 1109,R2,02;
+	CHF 1409,2C,02;
+
+	readToColP1:
+	RCV R3,0;
+	JCD R3,<,48,readToColP1;
+	JCD R3,>,55,readToColP1;
+	CHF 1909,R3,02;
+
+	checkTo:
+	LDI R5, 8;
+	LDI R6, 48;
+	SUB R2,R6;
+	SUB R3, R6;
+	MPY R5, R2;
+	ADD R5,R3;
+	LDG R6,R5;
+	JCD R6,=,1,makeMovePlayer1;
+	
+
+	LDI R9,8; /* Check if To is the diagonally low right*/
+	MOV R7,R0;
+	MOV R8,R1;
+	INC R7;
+	INC R8;
+	MPY R9,R7;
+	ADD R9,R8;
+	JCD R9,=,R5,moveAllowedP1;
+
+	LDI R9,8; /* Check if To is the diagonally low left*/
+	MOV R7,R0;
+	MOV R8,R1;
+	INC R7;
+	DEC R8;
+	MPY R9,R7;
+	ADD R9,R8;
+	JCD R9,=,R5,moveAllowedP1;
+	JMP D, makeMovePlayer1;
+
+	moveAllowedP1:
+	JCD R6,=,2,capture;
+	LDG R10,R11;
+	STG R6,R11;
+	STG R10,R5;
+	SWF R1R0,01,R3R2;
+	JMP D, makeMovePlayer2;
+
+	
+	
+
+	capture:
+	LDI R9,8; /* Check if To is the diagonally low right*/
+	MOV R7,R0;
+	MOV R8,R1;
+	INC R7;
+	INC R8;
+	MPY R9,R7;
+	ADD R9,R8;
+	JCD R9,=,R5,moveToCaptureR;
+
+	LDI R9,8; /* Check if To is the diagonally low left*/
+	MOV R7,R0;
+	MOV R8,R1;
+	INC R7;
+	DEC R8;
+	MPY R9,R7;
+	ADD R9,R8;
+	JCD R9,=,R5,moveToCaptureL;
+	
+
+	
+	moveToCaptureR:
+		LDI R6,0;
+		LDI R12,9;
+		ADD R9,R12;
+		LDG R10,R9;
+		JCD R10,<>,0,makeMovePlayer1;
+		
+		LDG R10,R11;
+		STG R6,R5;
+		STG R6,R11;
+		STG R10,R9;
+
+		STF R3R2,01,05;
+
+		INC R2;
+		INC R3;
+
+		SWF R1R0,01,R3R2;
+
+		DEC R15;
+
+		JMP D, makeMovePlayer2;
+
+	moveToCaptureL:
+		LDI R6,0;
+		LDI R12,7;
+		ADD R9,R12;
+		LDG R10,R9;
+		JCD R10,<>,0,makeMovePlayer1;
+		
+		LDG R10,R11;
+		STG R6,R5;
+		STG R6,R11;
+		STG R10,R9;
+
+		STF R3R2,01,05;
+
+		INC R2;
+		DEC R3;
+
+		SWF R1R0,01,R3R2;
+
+		DEC R15;
+
+		JMP D, makeMovePlayer2;
+	
+	
+
+		
+		
+		
+	
+
+	
+
+	
+
+makeMovePlayer2:
+
+
+	JCD R15,=,0,P1Wins;
+	JCD R14,=,0,P2Wins;
+
+	readFromRowP2:
+	CLF 0012,0D;
+	CLF 0512,0D;
+	CLF 0912,0D;
+	CLF 1212,0D;
+	RCV R0,0;
+	JCD R0,<,48,readFromRowP2;
+	JCD R0,>,55,readFromRowP2;
+	CHF 0015,R0,06;
+	CHF 0315,2C,06;
+
+	readFromColP2:
+	RCV R1,0;
+	JCD R1,<,48,readFromColP2;
+	JCD R1,>,55,readFromColP2;
+	CHF 0815,R1,06;
+	CHF 0D15,3E,06;
+
+	checkFromP2:
+	LDI R5, 8;
+	LDI R6, 48;
+	SUB R0,R6;
+	SUB R1, R6;
+	MPY R5, R0;
+	ADD R5,R1;
+	LDG R6,R5;
+	JCD R6,<>,2,makeMovePlayer2;
+	MOV R11,R5;
+
+	readToRowP2:
+	RCV R2,0;
+	JCD R2,<,48,readToRowP2;
+	JCD R2,>,55,readToRowP2;
+	CHF 1115,R2,06;
+	CHF 1415,2C,06;
+
+	readToColP2:
+	RCV R3,0;
+	JCD R3,<,48,readToColP2;
+	JCD R3,>,55,readToColP2;
+	CHF 1915,R3,06;
+
+	checkToP2:
+	LDI R5, 8;
+	LDI R6, 48;
+	SUB R2,R6;
+	SUB R3, R6;
+	MPY R5, R2;
+	ADD R5,R3;
+	LDG R6,R5;
+	JCD R6,=,2,makeMovePlayer2;
+	
+	
+	LDI R9,8; /* Check if To is the diagonally top right*/
+	MOV R7,R0;
+	MOV R8,R1;
+	DEC R7;
+	INC R8;
+	MPY R9,R7;
+	ADD R9,R8;
+	JCD R9,=,R5,moveAllowedP2;
+
+	LDI R9,8; /* Check if To is the diagonally top left*/
+	MOV R7,R0;
+	MOV R8,R1;
+	DEC R7;
+	DEC R8;
+	MPY R9,R7;
+	ADD R9,R8;
+	JCD R9,=,R5,moveAllowedP2;
+	JMP D, makeMovePlayer2;
+
+	
+
+	moveAllowedP2:
+	JCD R6,=,1,captureP2;
+	LDG R10,R11;
+	STG R6,R11;
+	STG R10,R5;
+	SWF R1R0,01,R3R2;
+	JMP D, makeMovePlayer1;
+
+	captureP2:
+	LDI R9,8; /* Check if To is the diagonally top right*/
+	MOV R7,R0;
+	MOV R8,R1;
+	DEC R7;
+	INC R8;
+	MPY R9,R7;
+	ADD R9,R8;
+	JCD R9,=,R5,moveToCaptureRP2;
+
+	LDI R9,8; /* Check if To is the diagonally top left*/
+	MOV R7,R0;
+	MOV R8,R1;
+	DEC R7;
+	DEC R8;
+	MPY R9,R7;
+	ADD R9,R8;
+	JCD R9,=,R5,moveToCaptureLP2;
+
+	moveToCaptureRP2:
+	LDI R6,0;
+	LDI R12,7;
+	SUB R9,R12;
+	LDG R10,R9;
+	JCD R10,<>,0,makeMovePlayer1;
+		
+	LDG R10,R11;
+	STG R6,R5;
+	STG R6,R11;
+	STG R10,R9;
+
+	STF R3R2,01,05;
+
+	DEC R2;
+	INC R3;
+
+	SWF R1R0,01,R3R2;
+
+	DEC R14;
+
+	JMP D, makeMovePlayer1;
+
+	moveToCaptureLP2:
+	LDI R6,0;
+	LDI R12,9;
+	SUB R9,R12;
+	LDG R10,R9;
+	JCD R10,<>,0,makeMovePlayer1;
+	
+		
+	LDG R10,R11;
+	STG R6,R5;
+	STG R6,R11;
+	STG R10,R9;
+
+	STF R3R2,01,05;
+
+	DEC R2;
+	DEC R3;
+
+	
+
+	SWF R1R0,01,R3R2;
+
+	DEC R14;
+
+	JMP D, makeMovePlayer1;
+
+P1Wins:
+	CLF 0009,16;
+	CLF 0909,16;
+
+	CHF 0009,50,02;
+	CHF 0409,31,02;
+	CHF 0015,57,02;
+	CHF 0515,49,02;
+	CHF 0915,4E,02;
+	CHF 0F15,53,02;
+	CHF 1315,21,02;
+
+	
+
+
+HLT;
+
+P2Wins:
+	CLF 0009,16;
+	CLF 0909,16;
+
+	CHF 0009,50,06;
+	CHF 0609,32,06;
+	CHF 0015,57,06;
+	CHF 0515,49,06;
+	CHF 0915,4E,06;
+	CHF 0F15,53,06;
+	CHF 1315,21,06;
+
+	
+
+HLT;
